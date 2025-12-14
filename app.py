@@ -9,7 +9,7 @@ st.set_page_config(page_title="Food Waste Prediction", layout="centered")
 
 st.title("🍽️ Food Waste Prediction App")
 
-# Absolute path
+# Get base directory
 BASE_DIR = os.path.dirname(__file__)
 
 # Load dataset (for dropdowns)
@@ -19,30 +19,33 @@ def load_data():
 
 dia = load_data()
 
-# Encode categorical columns
+# Encode categorical columns for dropdowns
 le_country = LabelEncoder()
 le_food = LabelEncoder()
 
 dia['Country_enc'] = le_country.fit_transform(dia['Country'])
 dia['Food_enc'] = le_food.fit_transform(dia['Food Category'])
 
-# Load trained model
+# Load the pre-trained model from food.pkl
 @st.cache_resource
 def load_model():
-    with open(os.path.join(BASE_DIR, "food.pkl"), "rb") as f:
+    model_path = os.path.join(BASE_DIR, "food.pkl")
+    with open(model_path, "rb") as f:
         return pickle.load(f)
 
 model = load_model()
 
+# User input
 st.subheader("📊 Enter Details")
-
 country = st.selectbox("Select Country", le_country.classes_)
 year = st.number_input("Enter Year", min_value=2000, max_value=2100, value=2020)
 food = st.selectbox("Select Food Category", le_food.classes_)
 
+# Encode input for prediction
 country_enc = le_country.transform([country])[0]
 food_enc = le_food.transform([food])[0]
 
+# Predict button
 if st.button("Predict Food Waste"):
     prediction = model.predict([[country_enc, year, food_enc]])
     st.success(f"Predicted Total Waste: **{prediction[0]:.2f} Tons**")
